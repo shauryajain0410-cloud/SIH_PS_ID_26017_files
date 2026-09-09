@@ -254,27 +254,74 @@ def main(data_dir, out_dir):
     print("\nTop 15 features:")
     print(importances.head(15))
 
-    # ---- Save everything needed for inference/explanation ----
+    # ---- Save the candidate as a versioned, timestamped bundle (always) ----
     from datetime import datetime
 
     bundle = {
-    "model": best_model,
-    "model_name": best_name,
-    "columns": cols,
-    "needs_scaling": needs_scaling,
-    "scaler": scaler if needs_scaling else None,
-}
+        "model": best_model,
+        "model_name": best_name,
+        "columns": cols,
+        "needs_scaling": needs_scaling,
+        "scaler": scaler if needs_scaling else None,
+        "test_metrics": test_metrics,
+    }
 
     version = datetime.now().strftime("%Y%m%d_%H%M%S")
+    versioned_path = os.path.join(out_dir, f"model_bundle_{version}.joblib")
+    joblib.dump(bundle, versioned_path)
+    print(f"Saved versioned candidate -> {versioned_path}")
 
-    model_path = os.path.join(
-    out_dir,
-    f"model_bundle_{version}.joblib"
-)
+    # ---- Promotion: only overwrite the PRODUCTION model_bundle.joblib if the
+    # new candidate beats (or ties, within tolerance) the currently deployed
+    # model on the same held-out test set. This is the promotion step
+    # described in MODEL_LIFECYCLE.md ("a newly trained model must not
+    # automatically replace the existing production model"). ----
+    PROMOTION_METRIC = "pr_auc"   # metric used to compare candidate vs. production
+    PROMOTION_TOLERANCE = 0.0     # candidate must be >= production - tolerance to be promoted
 
-    joblib.dump(bundle, model_path)
+    production_path = os.path.join(out_dir, "model_bundle.joblib")
+    promote = True
+    production_metrics = None
 
-    print(f"Saved versioned model -> {model_path}")
+    if os.path.exists(production_path):
+        try:
+            prod_bundle = joblib.load(production_path)
+            prod_model = prod_bundle["model"]
+            prod_needs_scaling = prod_bundle.get("needs_scaling", False)
+            prod_scaler = prod_bundle.get("scaler")
+            prod_cols = prod_bundle["columns"]
+
+            # Re-build test features against the PRODUCTION model's own column
+            # schema (it may differ slightly from the new candidate's schema).
+            X_test_prod, y_test_prod, _ = prep(test, cat_dummy_cols=prod_cols)
+            production_metrics, _, _ = evaluate(
+                prod_model, X_test_prod, y_test_prod,
+                needs_scaling=prod_needs_scaling, scaler=prod_scaler,
+            )
+
+            candidate_score = test_metrics[PROMOTION_METRIC]
+            production_score = production_metrics[PROMOTION_METRIC]
+            promote = candidate_score >= (production_score - PROMOTION_TOLERANCE)
+
+            print(f"\n=== PROMOTION CHECK ({PROMOTION_METRIC}) ===")
+            print(f"Candidate ({best_name}): {candidate_score:.4f}")
+            print(f"Production ({prod_bundle.get('model_name', 'unknown')}): {production_score:.4f}")
+            print("Decision:", "PROMOTE" if promote else "KEEP EXISTING PRODUCTION MODEL")
+        except Exception as e:
+            # If the existing production bundle can't be loaded/evaluated for
+            # any reason, fail safe: don't silently overwrite it.
+            print(f"\nCould not evaluate existing production model ({e}); "
+                  f"leaving it in place. Investigate before promoting manually.")
+            promote = False
+    else:
+        print("\nNo existing production model_bundle.joblib found — promoting candidate as the first production model.")
+
+    if promote:
+        joblib.dump(bundle, production_path)
+        print(f"Promoted candidate -> {production_path} (this is what explain_and_score.py / the API will use)")
+    else:
+        print(f"Candidate NOT promoted. Production model_bundle.joblib left unchanged.\n"
+              f"To force-promote anyway, manually copy {versioned_path} -> {production_path}.")
 
 
 if __name__ == "__main__":

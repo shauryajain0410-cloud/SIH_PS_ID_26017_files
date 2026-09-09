@@ -125,7 +125,7 @@ export function Sidebar({
         )}
         {userRole === "admin" && (
           <p className="leading-tight">
-            Admin View: Unrestricted access to inference engine, SHAP, and model metadata.
+            Admin View: Full platform access — all regions, inference logs, and model audit trail.
           </p>
         )}
       </div>

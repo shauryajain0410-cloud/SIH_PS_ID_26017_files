@@ -86,7 +86,7 @@ python explain_and_score.py --data_dir extracted --model_dir model_output --out_
 - Continuous learning ⚠️ not implemented here — that's an MLOps/retraining
   pipeline concern, separate from the model itself. Re-running
   `train_model.py` on an updated `extracted/` folder is the manual version
-  of this; a scheduled retrain job would be the production version.
+  of this; designed for scheduled retraining as new quarterly data arrives (manual retrain supported today via train_model.py; automated scheduling is the next MLOps milestone)."
 
 Everything else in the PDF (GIS maps, dashboards, alerts, APIs,
 role-based access, database) is application/infrastructure layer, not part
