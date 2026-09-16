@@ -1579,34 +1579,172 @@ def get_regional():
         # Regional quarterly timeline
         # -----------------------------------------
 
+                # -----------------------------------------
+        # Regional quarterly timeline
+        # -----------------------------------------
+
         timeline = []
 
-        if region_col and quarter_col:
-            rows = conn.execute(
-                f"""
-                SELECT
-                    {quarter_col} AS quarter,
-                    {region_col} AS region,
-                    COUNT(*) AS project_count
-                    {
-                        f", AVG({probability_col}) AS avg_probability"
-                        if probability_col
-                        else ""
-                    }
-                FROM project_scores
-                GROUP BY {quarter_col}, {region_col}
-                ORDER BY {quarter_col}, {region_col}
-                """
-            ).fetchall()
+        source_files = [
+            "infra_projects_train.csv",
+            "infra_projects_val.csv",
+            "infra_projects_test.csv",
+        ]
 
-            for row in rows:
+        timeline_source = []
+
+        for source_file in source_files:
+            source_path = os.path.join(
+                os.path.dirname(os.path.dirname(__file__)),
+                source_file
+            )
+
+            if os.path.exists(source_path):
+                try:
+                    df_source = pd.read_csv(source_path)
+
+                    needed_columns = [
+                        "quarter",
+                        "risk_tier",
+                        "physical_progress_pct",
+                        "land_acquisition_pct",
+                    ]
+
+                    if all(
+                        col in df_source.columns
+                        for col in needed_columns
+                    ):
+                        timeline_source.append(
+                            df_source[needed_columns].copy()
+                        )
+
+                except Exception as e:
+                    print(
+                        f"Failed to read {source_file}: {e}"
+                    )
+
+        if timeline_source:
+            timeline_df = pd.concat(
+                timeline_source,
+                ignore_index=True
+            )
+
+            timeline_df["physical_progress_pct"] = pd.to_numeric(
+                timeline_df["physical_progress_pct"],
+                errors="coerce"
+            )
+
+            timeline_df["land_acquisition_pct"] = pd.to_numeric(
+                timeline_df["land_acquisition_pct"],
+                errors="coerce"
+            )
+
+            timeline_df = timeline_df.dropna(
+                subset=["quarter"]
+            )
+
+            timeline_df["risk_tier"] = (
+                timeline_df["risk_tier"]
+                .astype(str)
+                .str.strip()
+                .str.lower()
+            )
+
+            quarter_order = [
+                "Q1-2014-15",
+                "Q2-2014-15",
+                "Q3-2014-15",
+                "Q4-2014-15",
+                "Q1-2015-16",
+                "Q2-2015-16",
+                "Q3-2015-16",
+                "Q4-2015-16",
+                "Q1-2016-17",
+                "Q2-2016-17",
+                "Q3-2016-17",
+                "Q4-2016-17",
+                "Q1-2017-18",
+                "Q2-2017-18",
+                "Q3-2017-18",
+                "Q4-2017-18",
+                "Q1-2018-19",
+                "Q2-2018-19",
+                "Q3-2018-19",
+                "Q4-2018-19",
+                "Q1-2019-20",
+                "Q2-2019-20",
+                "Q3-2019-20",
+                "Q4-2019-20",
+                "Q1-2020-21",
+                "Q2-2020-21",
+                "Q3-2020-21",
+                "Q4-2020-21",
+                "Q1-2021-22",
+                "Q2-2021-22",
+                "Q3-2021-22",
+                "Q4-2021-22",
+                "Q1-2022-23",
+                "Q2-2022-23",
+                "Q3-2022-23",
+                "Q4-2022-23",
+                "Q1-2023-24",
+                "Q2-2023-24",
+                "Q3-2023-24",
+                "Q4-2023-24",
+            ]
+
+            timeline_df["quarter_order"] = timeline_df["quarter"].map(
+                {q: i for i, q in enumerate(quarter_order)}
+            )
+
+            timeline_df = timeline_df.sort_values(
+                "quarter_order"
+            )
+
+            for quarter, group in timeline_df.groupby(
+                "quarter",
+                sort=False
+            ):
+                high_risk = group[
+                    group["risk_tier"].str.contains(
+                        "high",
+                        na=False
+                    )
+                ]
+
+                ontrack = group[
+                    ~group["risk_tier"].str.contains(
+                        "high",
+                        na=False
+                    )
+                ]
+
                 timeline.append({
-                    "quarter": row["quarter"] or "Unknown",
-                    "region": row["region"] or "Unknown",
-                    "project_count": row["project_count"],
-                    "avg_probability": safe_float(
-                        row["avg_probability"]
-                    ) if probability_col else 0.0,
+                    "quarter": str(quarter),
+
+                    "high_risk_physical_progress": safe_float(
+                        high_risk[
+                            "physical_progress_pct"
+                        ].mean()
+                    ),
+
+                    "ontrack_physical_progress": safe_float(
+                        ontrack[
+                            "physical_progress_pct"
+                        ].mean()
+                    ),
+
+                    "high_risk_land_pct": safe_float(
+                        high_risk[
+                            "land_acquisition_pct"
+                        ].mean()
+                    ),
+
+                    "ontrack_land_pct": safe_float(
+                        ontrack[
+                            "land_acquisition_pct"
+                        ].mean()
+                    ),
                 })
 
         return {
