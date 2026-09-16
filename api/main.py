@@ -1655,56 +1655,95 @@ def get_regional():
             .str.lower()
         )
 
-        # Put quarters in chronological order
-        quarter_order = [
-            "Q1-2014-15",
-            "Q2-2014-15",
-            "Q3-2014-15",
-            "Q4-2014-15",
-            "Q1-2015-16",
-            "Q2-2015-16",
-            "Q3-2015-16",
-            "Q4-2015-16",
-            "Q1-2016-17",
-            "Q2-2016-17",
-            "Q3-2016-17",
-            "Q4-2016-17",
-            "Q1-2017-18",
-            "Q2-2017-18",
-            "Q3-2017-18",
-            "Q4-2017-18",
-            "Q1-2018-19",
-            "Q2-2018-19",
-            "Q3-2018-19",
-            "Q4-2018-19",
-            "Q1-2019-20",
-            "Q2-2019-20",
-            "Q3-2019-20",
-            "Q4-2019-20",
-            "Q1-2020-21",
-            "Q2-2020-21",
-            "Q3-2020-21",
-            "Q4-2020-21",
-            "Q1-2021-22",
-            "Q2-2021-22",
-            "Q3-2021-22",
-            "Q4-2021-22",
-            "Q1-2022-23",
-            "Q2-2022-23",
-            "Q3-2022-23",
-            "Q4-2022-23",
-            "Q1-2023-24",
-            "Q2-2023-24",
-            "Q3-2023-24",
-            "Q4-2023-24",
-        ]
+        # -----------------------------------------
+        # Normalize quarter labels and sort
+        # chronologically
+        # -----------------------------------------
 
-        timeline_df["quarter_order"] = timeline_df["quarter"].map(
-            {q: i for i, q in enumerate(quarter_order)}
+        import re
+
+        def normalize_quarter(value):
+            if value is None or pd.isna(value):
+                return None
+
+            text = str(value).strip().upper()
+
+            # Convert separators like:
+            # Q2/2014 -> Q2-2014
+            # Q2 2014 -> Q2-2014
+            text = re.sub(r"[/_\s]+", "-", text)
+
+            # Already in correct form: Q2-2014-15
+            match = re.fullmatch(
+                r"Q([1-4])-(\d{4})-(\d{2})",
+                text
+            )
+
+            if match:
+                quarter = int(match.group(1))
+                start_year = int(match.group(2))
+                end_year = int(match.group(3))
+
+                return (
+                    f"Q{quarter}-"
+                    f"{start_year}-"
+                    f"{end_year:02d}"
+                )
+
+            # Short form: Q2-2014
+            # Interpret it as FY 2014-15
+            match = re.fullmatch(
+                r"Q([1-4])-(\d{4})",
+                text
+            )
+
+            if match:
+                quarter = int(match.group(1))
+                start_year = int(match.group(2))
+                end_year = (start_year + 1) % 100
+
+                return (
+                    f"Q{quarter}-"
+                    f"{start_year}-"
+                    f"{end_year:02d}"
+                )
+
+            return text
+
+        timeline_df["quarter"] = (
+            timeline_df["quarter"]
+            .apply(normalize_quarter)
+        )
+
+        # Create a real chronological sorting key.
+        # Example:
+        # Q1-2019-20 -> 2019*4 + 0
+        # Q2-2019-20 -> 2019*4 + 1
+        # Q4-2019-20 -> 2019*4 + 3
+        def quarter_sort_key(value):
+            if value is None:
+                return float("inf")
+
+            match = re.fullmatch(
+                r"Q([1-4])-(\d{4})-\d{2}",
+                str(value)
+            )
+
+            if not match:
+                return float("inf")
+
+            quarter = int(match.group(1))
+            year = int(match.group(2))
+
+            return year * 4 + (quarter - 1)
+
+        timeline_df["quarter_sort"] = (
+            timeline_df["quarter"]
+            .apply(quarter_sort_key)
         )
 
         timeline_df = timeline_df.sort_values(
-            "quarter_order"
+            "quarter_sort"
         )
 
         # Build chart data quarter by quarter
@@ -1727,25 +1766,44 @@ def get_regional():
                 )
             ]
 
+                # Percentage of projects with fully acquired land
+                # Treat >= 99.999% as fully acquired to avoid
+                # floating-point precision issues.
+            high_risk_land_complete_pct = (
+                    (
+                        high_risk["land_acquisition_pct"] >= 99.999
+                    ).mean() * 100
+                    if len(high_risk) > 0
+                    else 0.0
+                )
+
+            ontrack_land_complete_pct = (
+                    (
+                        ontrack["land_acquisition_pct"] >= 99.999
+                    ).mean() * 100
+                    if len(ontrack) > 0
+                    else 0.0
+                )
+
             timeline.append({
-                "quarter": str(quarter),
+                    "quarter": str(quarter),
 
-                "high_risk_physical_progress": safe_float(
-                    high_risk["physical_progress_pct"].mean()
-                ),
+                    "high_risk_physical_progress": safe_float(
+                        high_risk["physical_progress_pct"].mean()
+                    ),
 
-                "ontrack_physical_progress": safe_float(
-                    ontrack["physical_progress_pct"].mean()
-                ),
+                    "ontrack_physical_progress": safe_float(
+                        ontrack["physical_progress_pct"].mean()
+                    ),
 
-                "high_risk_land_pct": safe_float(
-                    high_risk["land_acquisition_pct"].mean()
-                ),
+                    "high_risk_land_complete_pct": safe_float(
+                        high_risk_land_complete_pct
+                    ),
 
-                "ontrack_land_pct": safe_float(
-                    ontrack["land_acquisition_pct"].mean()
-                ),
-            })
+                    "ontrack_land_complete_pct": safe_float(
+                        ontrack_land_complete_pct
+                    ),
+                })
 
 
 

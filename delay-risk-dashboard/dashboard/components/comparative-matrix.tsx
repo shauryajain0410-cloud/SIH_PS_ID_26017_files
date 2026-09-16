@@ -6,13 +6,15 @@ import {
   ResponsiveContainer,
   LineChart,
   Line,
+  BarChart,
+  Bar,
   XAxis,
   YAxis,
   Tooltip,
   Legend,
   CartesianGrid,
 } from "recharts";
-import { BarChart3, TrendingUp, Grid } from "lucide-react";
+import { TrendingUp, Grid } from "lucide-react";
 
 interface ComparativeMatrixProps {
   regions: string[];
@@ -135,63 +137,179 @@ export function ComparativeMatrix({ regions, matrix, timeline }: ComparativeMatr
               <h3 className="font-serif text-lg font-semibold">Quarterly Progress Trajectory</h3>
             </div>
             <p className="text-xs text-ink/60 dark:text-[#8A9086] mt-0.5">
-              Comparing average Physical Progress % vs Land Acquisition % over reporting quarters (High-Risk vs On-Track)
+              Comparing physical progress and land acquisition completion across reporting quarters
             </p>
           </div>
         </div>
 
-        <div className="h-[280px] w-full pt-2">
-          <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={timeline} margin={{ top: 10, right: 20, left: 0, bottom: 20 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#88888820" />
-              <XAxis dataKey="quarter" tick={{ fontSize: 11 }} angle={-30} textAnchor="end" />
-              <YAxis tick={{ fontSize: 11 }} domain={[0, 100]} unit="%" />
-              <Tooltip
-                contentStyle={{
-                  backgroundColor: "#1F2937",
-                  borderColor: "#374151",
-                  borderRadius: 6,
-                  color: "#F9FAFB",
-                  fontSize: 12,
-                }}
-              />
-              <Legend wrapperStyle={{ fontSize: 12, paddingTop: 10 }} />
-              <Line
-                type="monotone"
-                dataKey="ontrack_physical_progress"
-                name="On-Track Physical Progress (%)"
-                stroke="#16A34A"
-                strokeWidth={2.5}
-                dot={{ r: 3 }}
-              />
-              <Line
-                type="monotone"
-                dataKey="high_risk_physical_progress"
-                name="High-Risk Physical Progress (%)"
-                stroke="#DC2626"
-                strokeWidth={2.5}
-                dot={{ r: 3 }}
-              />
-              <Line
-                type="monotone"
-                dataKey="ontrack_land_pct"
-                name="On-Track Land Acquired (%)"
-                stroke="#0284C7"
-                strokeDasharray="4 4"
-                strokeWidth={2}
-                dot={{ r: 2 }}
-              />
-              <Line
-                type="monotone"
-                dataKey="high_risk_land_pct"
-                name="High-Risk Land Acquired (%)"
-                stroke="#D97706"
-                strokeDasharray="4 4"
-                strokeWidth={2}
-                dot={{ r: 2 }}
-              />
-            </LineChart>
-          </ResponsiveContainer>
+                <div className="space-y-8">
+
+          {/* Physical Progress */}
+          <div>
+            <p className="text-xs text-ink/60 dark:text-[#8A9086] mb-2">
+              Average physical progress by risk group
+            </p>
+
+            <div className="h-[260px] w-full">
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart
+                  data={timeline}
+                  margin={{
+                    top: 10,
+                    right: 20,
+                    left: 0,
+                    bottom: 20,
+                  }}
+                >
+                  <CartesianGrid
+                    strokeDasharray="3 3"
+                    stroke="#88888820"
+                  />
+
+                  <XAxis
+                    dataKey="quarter"
+                    interval={3}
+                    tick={{ fontSize: 11 }}
+                    angle={-30}
+                    textAnchor="end"
+                  />
+
+                  <YAxis
+                    tick={{ fontSize: 11 }}
+                    domain={[0, 100]}
+                    unit="%"
+                  />
+
+                  <Tooltip
+                    offset={15}
+                    wrapperStyle={{
+                      transform: "translateY(-25px)",
+                      pointerEvents: "none",
+                    }}
+                    contentStyle={{
+                      backgroundColor: "#1F2937",
+                      borderColor: "#374151",
+                      borderRadius: 6,
+                      color: "#F9FAFB",
+                      fontSize: 11,
+                      padding: "8px 10px",
+                    }}
+                    formatter={(value: number | string, name: string) => [
+                      `${Number(value).toFixed(1)}%`,
+                      name,
+                    ]}
+                  />
+
+                  <Legend
+                    wrapperStyle={{
+                      fontSize: 12,
+                      paddingTop: 10,
+                    }}
+                  />
+
+                  <Line
+                    type="monotone"
+                    dataKey="ontrack_physical_progress"
+                    name="On-Track Physical Progress"
+                    stroke="#16A34A"
+                    strokeWidth={2.5}
+                    dot={{ r: 3 }}
+                  />
+
+                  <Line
+                    type="monotone"
+                    dataKey="high_risk_physical_progress"
+                    name="High-Risk Physical Progress"
+                    stroke="#DC2626"
+                    strokeWidth={2.5}
+                    dot={{ r: 3 }}
+                  />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+
+          {/* Land Acquisition */}
+          <div>
+            <p className="text-xs text-ink/60 dark:text-[#8A9086] mb-2">
+              Percentage of projects with land fully acquired
+            </p>
+
+            <div className="h-[260px] w-full">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart
+                  data={timeline}
+                  margin={{
+                    top: 10,
+                    right: 20,
+                    left: 0,
+                    bottom: 20,
+                  }}
+                >
+                  <CartesianGrid
+                    strokeDasharray="3 3"
+                    stroke="#88888820"
+                  />
+
+                  <XAxis
+                    dataKey="quarter"
+                    interval={3}
+                    tick={{ fontSize: 11 }}
+                    angle={-30}
+                    textAnchor="end"
+                  />
+
+                  <YAxis
+                    tick={{ fontSize: 11 }}
+                    domain={[0, 100]}
+                    unit="%"
+                  />
+
+                  <Tooltip
+                    offset={15}
+                    wrapperStyle={{
+                      transform: "translateY(-25px)",
+                      pointerEvents: "none",
+                    }}
+                    contentStyle={{
+                      backgroundColor: "#1F2937",
+                      borderColor: "#374151",
+                      borderRadius: 6,
+                      color: "#F9FAFB",
+                      fontSize: 11,
+                      padding: "8px 10px",
+                    }}
+                    formatter={(value: number | string, name: string) => [
+                      `${Number(value).toFixed(1)}%`,
+                      name,
+                    ]}
+                  />
+
+                  <Legend
+                    wrapperStyle={{
+                      fontSize: 12,
+                      paddingTop: 10,
+                    }}
+                  />
+
+                  <Bar
+                    dataKey="ontrack_land_complete_pct"
+                    name="On-Track Fully Acquired"
+                    fill="#0284C7"
+                    radius={[3, 3, 0, 0]}
+                  />
+
+                  <Bar
+                    dataKey="high_risk_land_complete_pct"
+                    name="High-Risk Fully Acquired"
+                    fill="#D97706"
+                    radius={[3, 3, 0, 0]}
+                  />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+
         </div>
       </div>
     </div>

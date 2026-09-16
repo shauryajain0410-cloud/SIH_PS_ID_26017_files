@@ -218,8 +218,8 @@ export interface ProgressTimelinePoint {
   quarter: string;
   high_risk_physical_progress: number;
   ontrack_physical_progress: number;
-  high_risk_land_pct: number;
-  ontrack_land_pct: number;
+  high_risk_land_complete_pct: number;
+  ontrack_land_complete_pct: number;
 }
 
 export interface RegionalAnalyticsData {
