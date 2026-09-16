@@ -75,12 +75,18 @@ def first_existing(columns, names, default=None):
             return name
     return default
 
-
 def safe_float(value, default=0.0):
     try:
         if value is None:
             return default
-        return float(value)
+
+        value = float(value)
+
+        if not np.isfinite(value):
+            return default
+
+        return value
+
     except (TypeError, ValueError):
         return default
 
