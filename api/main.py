@@ -1593,6 +1593,27 @@ def get_regional():
 
         timeline_source = []
 
+        # Load prediction file containing risk_tier
+        predictions_path = os.path.join(
+            os.path.dirname(os.path.dirname(__file__)),
+            "model_output",
+            "inference_predictions_explained.csv"
+        )
+
+        predictions_df = pd.read_csv(predictions_path)
+
+        # Keep only the columns needed for joining
+        predictions_small = predictions_df[
+            [
+                "project_id",
+                "quarter",
+                "risk_tier"
+            ]
+        ].drop_duplicates(
+            subset=["project_id", "quarter"],
+            keep="last"
+        )
+
         for source_file in source_files:
             source_path = os.path.join(
                 os.path.dirname(os.path.dirname(__file__)),
@@ -1604,8 +1625,8 @@ def get_regional():
                     df_source = pd.read_csv(source_path)
 
                     needed_columns = [
+                        "project_id",
                         "quarter",
-                        "risk_tier",
                         "physical_progress_pct",
                         "land_acquisition_pct",
                     ]
@@ -1614,14 +1635,27 @@ def get_regional():
                         col in df_source.columns
                         for col in needed_columns
                     ):
+                        df_source = df_source[
+                            needed_columns
+                        ].copy()
+
+                        # Attach model risk tier
+                        df_source = df_source.merge(
+                            predictions_small,
+                            on=["project_id", "quarter"],
+                            how="left"
+                        )
+
                         timeline_source.append(
-                            df_source[needed_columns].copy()
+                            df_source
                         )
 
                 except Exception as e:
                     print(
                         f"Failed to read {source_file}: {e}"
                     )
+
+
 
         if timeline_source:
             timeline_df = pd.concat(
