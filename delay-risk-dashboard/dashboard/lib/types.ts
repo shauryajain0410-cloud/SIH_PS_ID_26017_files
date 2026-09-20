@@ -18,7 +18,8 @@ export interface ProjectListItem {
   predicted_delay_probability: number;
   predicted_delay_pct: number;
   risk_category: RiskCategory;
-  label_confidence_tier: string;
+  data_completeness: string;
+  missing_field_count: number;
   original_cost_crore: number;
   physical_progress_pct: number;
   land_acquisition_pct: number;

@@ -32,7 +32,7 @@ export async function fetchProjects(params?: {
   region?: string;
   sector?: string;
   risk?: string;
-  confidence_tier?: string;
+  data_completeness?: string;
   search?: string;
   page?: number;
   page_size?: number;
@@ -60,8 +60,8 @@ export async function fetchProjects(params?: {
       url.searchParams.set("risk", params.risk);
     }
 
-    if (params.confidence_tier && params.confidence_tier !== "All") {
-      url.searchParams.set("confidence_tier", params.confidence_tier);
+    if (params.data_completeness && params.data_completeness !== "All") {
+      url.searchParams.set("data_completeness", params.data_completeness);
     }
 
     if (params.search) {
@@ -149,11 +149,8 @@ export async function fetchProjects(params?: {
 
         risk_category: normalizedRisk,
 
-        label_confidence_tier: String(
-          p.label_confidence_tier ??
-          p.confidence_tier ??
-          "unknown_insufficient_evidence"
-        ),
+        data_completeness: String(p.data_completeness ?? "Sparse Data"),
+        missing_field_count: Number(p.missing_field_count ?? 0),
 
         original_cost_crore: Number(
           p.original_cost_crore ?? 0

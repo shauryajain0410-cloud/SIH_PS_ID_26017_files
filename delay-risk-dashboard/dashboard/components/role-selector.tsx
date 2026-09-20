@@ -42,52 +42,24 @@ export function RoleSelector({ currentRole, onUserChange }: RoleSelectorProps) {
   };
 
   return (
-    <div className="flex items-center gap-2 bg-paper dark:bg-slate-800 p-1.5 rounded-lg border border-line dark:border-[#2A3742] text-xs">
-      <div className="flex items-center gap-1.5 px-2 text-ink/60 dark:text-[#8A9086]">
-        <Shield size={14} className="text-teal" />
-        <span className="font-semibold uppercase tracking-wider text-[10px]">Active Role:</span>
-      </div>
+    <div className="flex items-center gap-1.5 rounded-md border border-line/70 dark:border-[#2A3742] bg-surface/70 dark:bg-[#141D26]/70 px-1.5 py-1 text-xs">
+      <span className="text-[10px] uppercase tracking-wide text-ink/40 dark:text-[#717870]">
+        Role
+      </span>
 
-      <div className="flex items-center gap-1">
-        <button
-          onClick={() => handleRoleSelect("admin")}
-          disabled={loading}
-          className={`px-2.5 py-1 rounded transition-colors text-xs ${
-            currentRole === "admin"
-              ? "bg-teal text-white font-medium shadow-sm"
-              : "text-ink/70 dark:text-gray-300 hover:bg-slate-200 dark:hover:bg-slate-700"
-          }`}
-          title="Full access + Model Metadata & Confusion Matrix"
-        >
-          Administrator
-        </button>
-
-        <button
-          onClick={() => handleRoleSelect("policymaker")}
-          disabled={loading}
-          className={`px-2.5 py-1 rounded transition-colors text-xs ${
-            currentRole === "policymaker"
-              ? "bg-teal text-white font-medium shadow-sm"
-              : "text-ink/70 dark:text-gray-300 hover:bg-slate-200 dark:hover:bg-slate-700"
-          }`}
-          title="Aggregate overview & Regional Analytics (Raw narrative restricted)"
-        >
-          Policymaker
-        </button>
-
-        <button
-          onClick={() => handleRoleSelect("project_manager")}
-          disabled={loading}
-          className={`px-2.5 py-1 rounded transition-colors text-xs ${
-            currentRole === "project_manager"
-              ? "bg-teal text-white font-medium shadow-sm"
-              : "text-ink/70 dark:text-gray-300 hover:bg-slate-200 dark:hover:bg-slate-700"
-          }`}
-          title="Risk Register & Project Detail (Scoped to North zone)"
-        >
-          Project Manager
-        </button>
-      </div>
+      <select
+        value={currentRole}
+        onChange={(e) =>
+          handleRoleSelect(e.target.value as UserRole)
+        }
+        disabled={loading}
+        className="bg-transparent text-xs font-medium text-ink dark:text-gray-200 outline-none cursor-pointer disabled:opacity-50"
+        aria-label="Current role"
+      >
+        <option value="admin">Administrator</option>
+        <option value="policymaker">Policymaker</option>
+        <option value="project_manager">Project Manager</option>
+      </select>
     </div>
   );
 }

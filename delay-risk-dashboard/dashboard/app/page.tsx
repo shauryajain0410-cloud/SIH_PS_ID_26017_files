@@ -58,7 +58,7 @@ export default function DashboardPage() {
   const [region, setRegion] = useState<string>("All");
   const [sector, setSector] = useState<string>("All");
   const [risk, setRisk] = useState<string>("All");
-  const [confidenceTier, setConfidenceTier] = useState<string>("All");
+  const [dataCompleteness, setDataCompleteness] = useState<string>("All");
   const [search, setSearch] = useState<string>("");
 
   // Detail Modal State
@@ -104,7 +104,7 @@ const loadProjects = useCallback(() => {
     region,
     sector,
     risk,
-    confidence_tier: confidenceTier,
+    data_completeness: dataCompleteness,
     search,
     page,
     page_size: pageSize,
@@ -132,7 +132,7 @@ const loadProjects = useCallback(() => {
   region,
   sector,
   risk,
-  confidenceTier,
+  dataCompleteness,
   search,
   page,
   pageSize,
@@ -200,7 +200,7 @@ useEffect(() => {
     setRegion(userProfile.role === "project_manager" ? userProfile.region : "All");
     setSector("All");
     setRisk("All");
-    setConfidenceTier("All");
+    setDataCompleteness("All");
     setSearch("");
     setPage(1);
   };
@@ -218,45 +218,76 @@ useEffect(() => {
       {/* Main Content Area */}
       <main className="flex-1 min-w-0 px-4 sm:px-8 py-7">
         {/* Top Header Strip */}
-        <header className="border-b border-line dark:border-[#2A3742] pb-5 mb-6">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <div>
-              <div className="text-[11px] font-mono text-ink/50 dark:text-[#8A9086] uppercase tracking-wider">
-                Smart India Hackathon 2026 &bull; Ministry of Rural Development (PS 26017)
+        <header className="sticky top-0 z-30 bg-paper/95 dark:bg-[#0F151B]/95 backdrop-blur border-b border-line dark:border-[#2A3742] py-3 mb-6">
+          <div className="flex items-center justify-between gap-4">
+
+            {/* Brand + Current Page */}
+            <div className="min-w-0">
+              <div className="flex items-center gap-3">
+                <div className="shrink-0">
+                  <div className="text-[10px] font-mono text-ink/50 dark:text-[#8A9086] uppercase tracking-wider">
+                    MoRD • SIH 26017
+                  </div>
+                  <div className="text-sm font-semibold text-ink dark:text-white">
+                    Land Acquisition Risk DSS
+                  </div>
+                </div>
+
+                <div className="h-7 w-px bg-line dark:bg-[#2A3742]" />
+
+                <h1 className="text-lg sm:text-xl font-semibold text-ink dark:text-white truncate">
+                  {activeSection === "overview" && "Executive Overview"}
+                  {activeSection === "register" && "Risk Register"}
+                  {activeSection === "predict-new" && "Predict New Project"}
+                  {activeSection === "regional" && "Regional Analytics"}
+                  {activeSection === "alerts" && "Alerts Feed"}
+                  {activeSection === "model" && "Model Governance"}
+                </h1>
               </div>
-              <h1 className="font-serif text-2xl sm:text-3xl font-bold mt-1 text-ink dark:text-white">
-                Land Acquisition Delay Risk Decision-Support System
-              </h1>
-              <div className="flex items-center gap-3 text-xs mt-2 text-ink/70 dark:text-[#B9BEB2]">
+
+              <div className="flex items-center gap-2 text-[11px] mt-1.5 text-ink/60 dark:text-[#8A9086]">
                 <span className="flex items-center gap-1">
-                  <span className="w-2 h-2 rounded-full bg-emerald-500 inline-block" />
-                  Live Model Serving: <strong className="text-teal">LightGBM + TreeSHAP</strong>
-                </span>
-                <span>&bull;</span>
-                <span>
-                  Logged in: <strong>{userProfile.name}</strong> ({userProfile.department})
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block" />
+                  LightGBM + TreeSHAP
                 </span>
               </div>
             </div>
 
-            <div className="flex items-center gap-2">
-              <RoleSelector currentRole={userProfile.role} onUserChange={handleRoleChange} />
+            {/* Header Controls */}
+            <div className="flex items-center gap-2 shrink-0">
+              <div className="text-[10px] uppercase tracking-wide text-ink/40 dark:text-[#717870] hidden sm:block">
+                Role
+              </div>
+
+              <RoleSelector
+                currentRole={userProfile.role}
+                onUserChange={handleRoleChange}
+              />
+
               <button
                 onClick={loadGlobalData}
                 className="p-2 rounded-lg border border-line dark:border-[#2A3742] bg-surface dark:bg-[#141D26] hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
                 title="Refresh live metrics"
               >
-                <RefreshCw size={14} className={loadingOverview ? "animate-spin text-teal" : "text-ink/60"} />
+                <RefreshCw
+                  size={14}
+                  className={
+                    loadingOverview
+                      ? "animate-spin text-teal"
+                      : "text-ink/60"
+                  }
+                />
               </button>
             </div>
           </div>
 
           {/* Backend Connection Error Warning */}
           {apiError && (
-            <div className="mt-4 p-3 bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900 rounded-lg flex items-center gap-2 text-xs text-red-800 dark:text-red-300">
+            <div className="mt-3 p-3 bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900 rounded-lg flex items-center gap-2 text-xs text-red-800 dark:text-red-300">
               <AlertCircle size={16} className="shrink-0" />
               <span>
-                Backend Status Warning: {apiError}. Ensure FastAPI is running (`cd backend &amp;&amp; uvicorn main:app --reload`).
+                Backend Status Warning: {apiError}. Ensure FastAPI is running
+                (`cd backend &amp;&amp; uvicorn main:app --reload`).
               </span>
             </div>
           )}
@@ -312,12 +343,15 @@ useEffect(() => {
               region={region}
               sector={sector}
               risk={risk}
-              confidenceTier={confidenceTier}
+              dataCompleteness={dataCompleteness}
               search={search}
               onRegionChange={(v) => { setRegion(v); setPage(1); }}
               onSectorChange={(v) => { setSector(v); setPage(1); }}
               onRiskChange={(v) => { setRisk(v); setPage(1); }}
-              onConfidenceTierChange={(v) => { setConfidenceTier(v); setPage(1); }}
+              onDataCompletenessChange={(v) => {
+                setDataCompleteness(v);
+                setPage(1);
+              }}
               onSearchChange={(v) => { setSearch(v); setPage(1); }}
               onReset={handleResetFilters}
             />
@@ -358,7 +392,7 @@ useEffect(() => {
                   setRegion(reg);
                   setSector("All");
                   setRisk("All");
-                  setConfidenceTier("All");
+                  setDataCompleteness("All");
                   setSearch("");
                   setPage(1);
                   setActiveSection("register");
@@ -368,7 +402,7 @@ useEffect(() => {
                   setPage(1);
                   setSector("All");
                   setRisk("All");
-                  setConfidenceTier("All");
+                  setDataCompleteness("All");
                   setSearch("");
                   setActiveSection("register");
                 }}

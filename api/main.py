@@ -119,7 +119,7 @@ def query_projects(
     region="All",
     sector="All",
     risk="All",
-    confidence_tier="All",
+    data_completeness="All",
     search="",
     page=1,
     page_size=25,
@@ -193,6 +193,12 @@ def query_projects(
                 "land_acquisition_pct",
                 "land_gap_ha_calc",
                 "label_confidence_tier",
+                "time_overrun_months_was_missing",
+                "physical_progress_pct_was_missing",
+                "land_required_ha_was_missing",
+                "delay_reason_was_missing",
+                "extracted_scheduled_date_was_missing",
+                "original_completion_date_was_missing",
             ]
             if c in base_df.columns
         ]
@@ -276,6 +282,46 @@ def query_projects(
         else:
             drivers = []
 
+        # Data completeness
+
+        missing_flag_columns = [
+                "time_overrun_months_was_missing",
+                "physical_progress_pct_was_missing",
+                "land_required_ha_was_missing",
+                "delay_reason_was_missing",
+                "extracted_scheduled_date_was_missing",
+                "original_completion_date_was_missing",
+            ]
+
+        missing_fields = []
+
+        for field in missing_flag_columns:
+                value = get_value(
+                    row,
+                    field,
+                    default=False
+                )
+
+                if isinstance(value, str):
+                    is_missing = (
+                        value.strip().lower()
+                        in {"1", "true", "yes", "y"}
+                    )
+                else:
+                    is_missing = bool(value)
+
+                if is_missing:
+                    missing_fields.append(field)
+
+        missing_count = len(missing_fields)
+
+        if missing_count == 0:
+                data_completeness = "Complete Data"
+        elif missing_count <= 2:
+                data_completeness = "Partial Data"
+        else:
+                data_completeness = "Sparse Data"
+
         projects.append({
             "project_id": str(
                 get_value(row, "project_id", default="")
@@ -303,6 +349,9 @@ def query_projects(
             "predicted_delay_pct": probability * 100,
 
             "risk_category": risk_category,
+
+            "data_completeness" : data_completeness,
+            "missing_field_count": missing_count,
 
             "label_confidence_tier": str(
                 get_value(
@@ -365,10 +414,10 @@ def query_projects(
             if p["risk_category"] == risk
         ]
 
-    if confidence_tier != "All":
+    if data_completeness != "All":
         projects = [
             p for p in projects
-            if p["label_confidence_tier"] == confidence_tier
+            if p["data_completeness"] == data_completeness
         ]
 
     if search:
@@ -436,7 +485,7 @@ def get_projects_api(
     region: str = "All",
     sector: str = "All",
     risk: str = "All",
-    confidence_tier: str = "All",
+    data_completeness: str = "All",
     search: str = "",
     page: int = 1,
     page_size: int = 25,
@@ -447,7 +496,7 @@ def get_projects_api(
         region=region,
         sector=sector,
         risk=risk,
-        confidence_tier=confidence_tier,
+        data_completeness=data_completeness,
         search=search,
         page=page,
         page_size=page_size,

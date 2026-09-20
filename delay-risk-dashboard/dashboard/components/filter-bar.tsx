@@ -1,7 +1,6 @@
 "use client";
 
 import React from "react";
-import { RiskCategory } from "@/lib/types";
 import { Search, Filter, RotateCcw } from "lucide-react";
 
 interface FilterBarProps {
@@ -10,12 +9,12 @@ interface FilterBarProps {
   region: string;
   sector: string;
   risk: string;
-  confidenceTier: string;
+  dataCompleteness: string;
   search: string;
   onRegionChange: (v: string) => void;
   onSectorChange: (v: string) => void;
   onRiskChange: (v: string) => void;
-  onConfidenceTierChange: (v: string) => void;
+  onDataCompletenessChange: (v: string) => void;
   onSearchChange: (v: string) => void;
   onReset: () => void;
 }
@@ -26,12 +25,12 @@ export function FilterBar({
   region,
   sector,
   risk,
-  confidenceTier,
+  dataCompleteness,
   search,
   onRegionChange,
   onSectorChange,
   onRiskChange,
-  onConfidenceTierChange,
+  onDataCompletenessChange,
   onSearchChange,
   onReset,
 }: FilterBarProps) {
@@ -49,6 +48,7 @@ export function FilterBar({
         className="border border-line dark:border-[#2A3742] rounded bg-paper dark:bg-slate-800 text-ink dark:text-gray-200 px-2.5 py-1.5 focus:outline-none focus:border-teal"
       >
         <option value="All">All Regions</option>
+
         {regions.map((r) => (
           <option key={r} value={r}>
             {r}
@@ -63,6 +63,7 @@ export function FilterBar({
         className="border border-line dark:border-[#2A3742] rounded bg-paper dark:bg-slate-800 text-ink dark:text-gray-200 px-2.5 py-1.5 focus:outline-none focus:border-teal max-w-[200px]"
       >
         <option value="All">All Sectors</option>
+
         {sectors.map((s) => (
           <option key={s} value={s}>
             {s}
@@ -82,22 +83,25 @@ export function FilterBar({
         <option value="Low">Low Risk (&lt;35%)</option>
       </select>
 
-      {/* Label Confidence Tier Filter */}
+      {/* Data Completeness Filter */}
       <select
-        value={confidenceTier}
-        onChange={(e) => onConfidenceTierChange(e.target.value)}
+        value={dataCompleteness}
+        onChange={(e) => onDataCompletenessChange(e.target.value)}
         className="border border-line dark:border-[#2A3742] rounded bg-paper dark:bg-slate-800 text-ink dark:text-gray-200 px-2.5 py-1.5 focus:outline-none focus:border-teal"
       >
-        <option value="All">All Confidence Tiers</option>
-        <option value="high_date_evidence">High Date Evidence</option>
-        <option value="medium_time_overrun">Medium (Historical Overrun)</option>
-        <option value="low_narrative_signal">Low (Narrative Signal)</option>
-        <option value="unknown_insufficient_evidence">Unlabeled / Insufficient</option>
+        <option value="All">All Data Completeness</option>
+        <option value="Complete Data">Complete Data</option>
+        <option value="Partial Data">Partial Data</option>
+        <option value="Sparse Data">Sparse Data</option>
       </select>
 
       {/* Search Input */}
       <div className="relative flex-1 min-w-[170px]">
-        <Search size={14} className="absolute left-2.5 top-2 text-ink/40" />
+        <Search
+          size={14}
+          className="absolute left-2.5 top-2 text-ink/40"
+        />
+
         <input
           type="text"
           placeholder="Search project ID or keyword..."
@@ -108,7 +112,13 @@ export function FilterBar({
       </div>
 
       {/* Reset Filters */}
-      {(region !== "All" || sector !== "All" || risk !== "All" || confidenceTier !== "All" || search) && (
+      {(
+        region !== "All" ||
+        sector !== "All" ||
+        risk !== "All" ||
+        dataCompleteness !== "All" ||
+        search
+      ) && (
         <button
           onClick={onReset}
           className="flex items-center gap-1 text-[11px] text-ink/60 hover:text-ink dark:text-gray-400 dark:hover:text-white px-2 py-1.5"

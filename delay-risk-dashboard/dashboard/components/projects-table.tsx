@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import { ProjectListItem, RiskCategory } from "@/lib/types";
-import { formatCrore, formatPct, formatConfidenceTier, RISK_COLORS, RISK_BG } from "@/lib/format";
+import { formatCrore, formatPct, RISK_COLORS, RISK_BG } from "@/lib/format";
 import { ArrowUpDown, AlertCircle, ChevronLeft, ChevronRight, Search, SlidersHorizontal } from "lucide-react";
 
 interface ProjectsTableProps {
@@ -62,7 +62,7 @@ export function ProjectsTable({
               </th>
               <th className="py-3 px-3 text-center">Risk Tier</th>
               <th className="py-3 px-3">Top Delay Drivers</th>
-              <th className="py-3 px-3">Confidence Tier</th>
+              <th className="py-3 px-3">Data Completeness</th>
               <th className="py-3 px-3 text-right">Physical Progress</th>
             </tr>
           </thead>
@@ -148,14 +148,21 @@ export function ProjectsTable({
                     </div>
                   </td>
 
-                  {/* Confidence Tier Badge */}
+                  {/* Data Completeness Badge */}
                   <td className="py-2.5 px-3">
                     <span
                       className={`text-[10px] px-2 py-0.5 rounded-full border font-medium whitespace-nowrap ${
-                        formatConfidenceTier(p.label_confidence_tier).badgeClass
+                        p.data_completeness === "Complete Data"
+                          ? "border-emerald-300 bg-emerald-50 text-emerald-700 dark:border-emerald-800 dark:bg-emerald-950/30 dark:text-emerald-300"
+                          : p.data_completeness === "Partial Data"
+                          ? "border-amber-300 bg-amber-50 text-amber-700 dark:border-amber-800 dark:bg-amber-950/30 dark:text-amber-300"
+                          : "border-red-300 bg-red-50 text-red-700 dark:border-red-800 dark:bg-red-950/30 dark:text-red-300"
+                      }`}
+                      title={`${p.missing_field_count} missing input field${
+                        p.missing_field_count === 1 ? "" : "s"
                       }`}
                     >
-                      {formatConfidenceTier(p.label_confidence_tier).label}
+                      {p.data_completeness}
                     </span>
                   </td>
 
