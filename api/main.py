@@ -316,11 +316,11 @@ def query_projects(
         missing_count = len(missing_fields)
 
         if missing_count == 0:
-                data_completeness = "Complete Data"
+                row_data_completeness = "Complete Data"
         elif missing_count <= 2:
-                data_completeness = "Partial Data"
+                row_data_completeness = "Partial Data"
         else:
-                data_completeness = "Sparse Data"
+                row_data_completeness = "Sparse Data"
 
         projects.append({
             "project_id": str(
@@ -350,7 +350,7 @@ def query_projects(
 
             "risk_category": risk_category,
 
-            "data_completeness" : data_completeness,
+            "data_completeness" : row_data_completeness,
             "missing_field_count": missing_count,
 
             "label_confidence_tier": str(
